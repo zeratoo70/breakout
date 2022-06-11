@@ -9,7 +9,7 @@ from gym.wrappers import FrameStack
 
 def main():
 
-    env = gym.make("ALE/Breakout-v5", render_mode="human").unwrapped
+    env = gym.make("ALE/Breakout-v5", render_mode="rgb_array").unwrapped
     env = SkipFrame(env, skip=4)
     env = GrayScaleObservation(env)
     env = ResizeObservation(env, shape=84)
@@ -24,7 +24,7 @@ def main():
     agent = Agent(env, save_dir)
     logger = MetricLogger(save_dir)
 
-    episodes = 100000
+    episodes = 1000000
     for e in range(episodes):
         state = env.reset()
 

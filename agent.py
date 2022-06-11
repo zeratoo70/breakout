@@ -13,7 +13,7 @@ class ReplayBuffer:
     """ReplayBuffer используется для хранения предыдущего опыта, для того чтобы агент учился на нем
     
     """
-    def __init__(self, capacity: int = 200) -> None:
+    def __init__(self, capacity: int = 100000) -> None:
         self.memory = deque([], maxlen=capacity)
     
     def __len__(self) -> int:
@@ -30,11 +30,11 @@ class ReplayBuffer:
         done = torch.tensor([done])
 
         if torch.cuda.is_available():
-            state = state.cuda()
-            action = action.cuda()
-            reward = reward.cuda()
+            # state = state.cuda()
+            # action = action.cuda()
+            # reward = reward.cuda()
             done = done.cuda()
-            next_state = next_state.cuda()
+            # next_state = next_state.cuda()
 
         self.memory.append(Experience(state, action, reward, done, next_state))
     
@@ -42,19 +42,13 @@ class ReplayBuffer:
         """Создать сэмпл
 
         """
-        indices = random.sample(self.memory, batch_size)
-        states, actions, rewards, dones, next_states = map(torch.stack, zip(*indices))
+        batch = random.sample(self.memory, batch_size)
+        states, actions, rewards, dones, next_states = map(torch.stack, zip(*batch))
+        states, next_states, actions, rewards, dones = states.cuda(), next_states.cuda(), actions.cuda(), rewards.cuda(), dones.cuda()
         actions = actions.squeeze()
         rewards = rewards.squeeze()
         dones = dones.squeeze()
 
-        # if torch.cuda.is_available():
-        #     states = states.cuda()
-        #     actions = actions.cuda()
-        #     rewards = rewards.cuda()
-        #     dones = dones.cuda()
-        #     next_states = next_states.cuda()
-        
         return states, actions, rewards, dones, next_states
 
 
@@ -73,13 +67,14 @@ class Agent:
         self.exploration_rate_decay = 0.99999975
         self.exploration_rate_min = 0.1
         self.curr_step = 0
-        self.save_every = 5e4
-        self.gamma = 0.9 # Discount rate
-        self.optimizer = torch.optim.Adam(self.net.parameters(), lr=0.02)
-        self.loss_fn = torch.nn.SmoothL1Loss()
+        self.save_every = 5e5
+        self.gamma = 0.99 # Discount rate
         self.burnin = 1e4 # Min experiences before training
         self.learn_every = 3
         self.sync_every = 1e4
+
+        self.optimizer = torch.optim.Adam(self.net.parameters(), lr=1e-3)
+        self.loss_fn = torch.nn.SmoothL1Loss()
 
     def reset(self) -> None:
         self.state = self.env.reset()
