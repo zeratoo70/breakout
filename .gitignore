@@ -1,6 +1,8 @@
 *.ipynb
 *.bin
-test.py
+*.py
+!individual_project.ipynb
 !breakout.bin
 /__pycache__
-/checkpoints
+
+
