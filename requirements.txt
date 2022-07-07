@@ -1,2 +1,3 @@
 stable-baselines3
-torch
+gym[accept-rom-license]
+ale-py
